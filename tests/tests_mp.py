@@ -42,6 +42,15 @@ def log_msg(msg):
     # time.sleep(random.random()/30)
     logging.info('%s\t%s', msg, os.getpid())
 
+def test_file():
+    res = 0
+    for name in os.listdir():
+        if name.startswith('main.log'):
+            for line in open(name):
+                res += int(line.split('\t')[1])
+    print('jobs sum: ', res)
+    assert res == sum(range(JOBS))
+
 if __name__ == '__main__':
     os.system('rm -rf main.log.*')
     os.system('rm -rf .main.lock*')
@@ -57,3 +66,4 @@ if __name__ == '__main__':
     pool.join()
     print('QPS:', JOBS/(time.time()-start))
     time.sleep(2)
+    test_file()
