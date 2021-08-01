@@ -18,7 +18,7 @@ setup(
         'Programming Language :: Python :: 3.5',
     ],
     # critical configurations.
-    packages=find_packages(),
+    packages=find_packages(exclude=["tests"]),
     py_modules=[
         "mptrfhandler",
     ],
