@@ -13,6 +13,7 @@ LOGGING = {
             # 'backupCount': 5,
             'formatter':'simple',
             'when': 'S',
+            # 'debug': True,
         },
     },
     'loggers': {
@@ -43,11 +44,12 @@ def log_msg(msg):
 
 if __name__ == '__main__':
     os.system('rm -rf main.log.*')
+    os.system('rm -rf .main.lock*')
     os.system('truncate -s0 main.log')
     time.sleep(1)
 
     JOBS = 100000
-    WORKERS = 8
+    WORKERS = 100
     pool = Pool(WORKERS)
     start = time.time()
     pool.map(log_msg, ('{:0>10}'.format(i) for i in range(JOBS)))

@@ -8,11 +8,12 @@ from stat import ST_MTIME
 # sibling module than handles all the ugly platform-specific details of file locking
 from portalocker import lock, unlock, LOCK_EX
 import mmap
-
+import struct
 
 __version__ = '0.0.5'
 __author__ = "ruan.lj@foxmail.com"
 _MIDNIGHT = 24 * 60 * 60  # number of seconds in a day
+TIME_WIDTH = 4
 
 class MultProcTimedRotatingFileHandler(BaseRotatingHandler):
     """
@@ -72,7 +73,6 @@ class MultProcTimedRotatingFileHandler(BaseRotatingHandler):
         # lock file, contain next rollover timestamp
         self.stream_lock = None
         self.lock_file = self._getLockFile()
-        self._openLockFile()
 
         # read from conf first for inherit the first process
         # if it is the first process, please remove the lock file by hand first
@@ -80,6 +80,8 @@ class MultProcTimedRotatingFileHandler(BaseRotatingHandler):
             t = os.stat(self.baseFilename)[ST_MTIME]
         else:
             t = int(time.time())
+
+        self._openLockFile()
         self.nextRolloverTime = self.getNextRolloverTime()
         if not self.nextRolloverTime:
             self.nextRolloverTime = self.computerNextRolloverTime(t)
@@ -88,7 +90,7 @@ class MultProcTimedRotatingFileHandler(BaseRotatingHandler):
     def _log2mylog(self, msg):
         time_str = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
         msg = str(msg)
-        content = "%s [%s]\n"% (time_str, msg)
+        content = "[%s %s]\t%s\n"% (os.getpid(), time_str, msg)
         sys.stderr.write(content)
 
     def _getLockFile(self):
@@ -103,15 +105,16 @@ class MultProcTimedRotatingFileHandler(BaseRotatingHandler):
 
     def _openLockFile(self):
         lock_file = self._getLockFile()
-        self.stream_lock = open(lock_file, 'w')
-        self.acquire()
+        self.stream_lock = open(lock_file, 'wb')
+
+        lock(self.stream_lock, LOCK_EX)
         try:
             with open(lock_file + '.rotate_time', 'wb') as fp:
-                fp.write(b'0' * 10)
+                fp.write(struct.pack('>L', 0))
             with open(lock_file + '.rotate_time', 'r+') as fp:
                 self._rolloverAtMMap = mmap.mmap(fp.fileno(), 0)
         finally:
-            self.release()
+            unlock(self.stream_lock)
 
     def computerNextRolloverTime(self, currentTime=None):
         """ Work out the next rollover time. """
@@ -189,8 +192,8 @@ class MultProcTimedRotatingFileHandler(BaseRotatingHandler):
     def getNextRolloverTime(self):
         """ get next rollover time stamp from lock file """
         self._rolloverAtMMap.seek(0)
-        tmp = self._rolloverAtMMap.read(10)
-        return int(tmp)
+        tmp = self._rolloverAtMMap.read(TIME_WIDTH)
+        return struct.unpack('>L', tmp)[0]
 
     def saveNextRolloverTime(self):
         """ save the nextRolloverTimestamp to lock file
@@ -200,10 +203,10 @@ class MultProcTimedRotatingFileHandler(BaseRotatingHandler):
         """
         if not self.nextRolloverTime:
             return
-        content = '{:0>10}'.format(self.nextRolloverTime).encode('latin1')
-
         if not self.stream_lock:
             self._openLockFile()
+
+        content = struct.pack('>L', self.nextRolloverTime)
         lock(self.stream_lock, LOCK_EX)
         try:
             self._rolloverAtMMap.seek(0)
@@ -211,11 +214,11 @@ class MultProcTimedRotatingFileHandler(BaseRotatingHandler):
         except:
             if self.debug:
                 self._log2mylog('saveNextRT exception!!!')
-
         finally:
             unlock(self.stream_lock)
+
         if self.debug:
-            self._log2mylog('saveNextRT:%s'% content)
+            self._log2mylog('saveNextRT:%s'% self.nextRolloverTime)
 
 
     def acquire(self):
