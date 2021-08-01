@@ -10,7 +10,7 @@ from portalocker import lock, unlock, LOCK_EX
 import mmap
 import struct
 
-__version__ = '0.0.6'
+__version__ = '0.0.7'
 __author__ = "ruan.lj@foxmail.com"
 _MIDNIGHT = 24 * 60 * 60  # number of seconds in a day
 TIME_WIDTH = 4
@@ -276,6 +276,7 @@ class MultProcTimedRotatingFileHandler(BaseRotatingHandler):
                 if not self.stream_lock.closed:
                     self.stream_lock.flush()
                     self.stream_lock.close()
+                    self._rolloverAtMMap.close()
             finally:
                 self.stream_lock = None
 
