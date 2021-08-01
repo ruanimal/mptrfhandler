@@ -10,8 +10,8 @@ from portalocker import lock, unlock, LOCK_EX
 import mmap
 
 
-__version__ = '0.0.4'
-__author__ = "jayruan"
+__version__ = '0.0.5'
+__author__ = "ruan.lj@foxmail.com"
 _MIDNIGHT = 24 * 60 * 60  # number of seconds in a day
 
 class MultProcTimedRotatingFileHandler(BaseRotatingHandler):
@@ -104,11 +104,14 @@ class MultProcTimedRotatingFileHandler(BaseRotatingHandler):
     def _openLockFile(self):
         lock_file = self._getLockFile()
         self.stream_lock = open(lock_file, 'w')
-
-        with open(lock_file + '.rotate_time', 'wb') as fp:
-            fp.write(b'0' * 10)
-        with open(lock_file + '.rotate_time', 'r+') as fp:
-            self._rolloverAtMMap = mmap.mmap(fp.fileno(), 0)
+        self.acquire()
+        try:
+            with open(lock_file + '.rotate_time', 'wb') as fp:
+                fp.write(b'0' * 10)
+            with open(lock_file + '.rotate_time', 'r+') as fp:
+                self._rolloverAtMMap = mmap.mmap(fp.fileno(), 0)
+        finally:
+            self.release()
 
     def computerNextRolloverTime(self, currentTime=None):
         """ Work out the next rollover time. """
