@@ -10,7 +10,7 @@ from portalocker import lock, unlock, LOCK_EX
 import mmap
 import struct
 
-__version__ = '0.0.5'
+__version__ = '0.0.6'
 __author__ = "ruan.lj@foxmail.com"
 _MIDNIGHT = 24 * 60 * 60  # number of seconds in a day
 TIME_WIDTH = 4
