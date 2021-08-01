@@ -8,7 +8,7 @@ setup(
     name='mptrfhandler',
     version=__version__,
     author=__author__,
-    author_email='jayruan@tencent.com',
+    author_email=__author__,
     description='支持按时间滚动的Python多进程日志Handler',
     classifiers=[
         'License :: OSI Approved :: MIT License',

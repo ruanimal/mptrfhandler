@@ -1,8 +1,19 @@
 # MultProcTimedRotatingFileHandler
-支持按时间滚动的Python多进程日志Handler, 只在python3.5上测试通过
-参考了 mpfhandler.MultProcTimedRotatingFileHandler
-添加了intervel支持
-支持备份自动清理
+支持按时间滚动的Python多进程日志Handler, 支支持macOS/Linux, 自用未充分测试
+
+参考了 https://github.com/yorks/mpfhandler, 有如下优化
+- 添加了intervel支持
+- 支持备份自动清理
+- 使用MMAP优化了性能
+
+# 性能基准
+8核CPU, 8进程, 100000条长度47字符日志测试, 相比TimedRotatingFileHandler大约有25%-30%性能损耗
+随着进程数增大, 锁竞争也变激烈了, 性能损耗也会进一步增大, 100进程下会有50%-60%性能损耗
+
+8进程, QPS情况
+- MultProcTimedRotatingFileHandler: 23482
+- TimedRotatingFileHandler: 30349
+
 
 # 配置示例
 ```

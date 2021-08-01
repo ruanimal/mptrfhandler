@@ -48,8 +48,8 @@ if __name__ == '__main__':
 
     JOBS = 100000
     WORKERS = 8
-    start = time.time()
     pool = Pool(WORKERS)
+    start = time.time()
     pool.map(log_msg, ('{:0>10}'.format(i) for i in range(JOBS)))
     pool.close()
     pool.join()
