@@ -31,6 +31,6 @@ setup(
     ],
     install_requires=requirements,
     project_urls={
-        'Source': 'https://github.com/ruanima/mptrfhandler',
+        'Source': 'https://github.com/ruanimal/mptrfhandler',
     },
 )
